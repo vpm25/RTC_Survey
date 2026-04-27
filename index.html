@@ -516,15 +516,29 @@ function deleteSelected() {
   if (!confirm('Delete ' + selected.length + ' selected response(s)?\nThis cannot be undone.')) return;
   var btn = document.getElementById('btn-delete-sel');
   btn.textContent = 'Deleting...'; btn.disabled = true;
+  console.log('Deleting keys:', selected);
   var promises = selected.map(function(key) {
-    return fetch(FIREBASE_URL + '/responses/' + key + '.json', { method: 'DELETE' });
+    var url = FIREBASE_URL + '/responses/' + key + '.json';
+    console.log('DELETE:', url);
+    return fetch(url, { method: 'DELETE' })
+      .then(function(res) {
+        console.log('DELETE', key, 'status:', res.status);
+        return res;
+      });
   });
   Promise.all(promises).then(function() {
     showToast('✓ ' + selected.length + ' response(s) deleted', '#2d7a4f');
-    loadResponses();
+    setTimeout(function(){ loadResponses(); }, 500);
   }).catch(function(err) {
     showToast('⚠️ Error: ' + err.message, '#ef4444');
     btn.textContent = '🗑 Delete selected'; btn.disabled = false;
+  }).finally(function() {
+    setTimeout(function(){
+      if (btn.disabled) {
+        btn.textContent = '🗑 Delete selected';
+        btn.disabled = false;
+      }
+    }, 4000);
   });
 }
 
