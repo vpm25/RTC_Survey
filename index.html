@@ -626,8 +626,19 @@ function adminLogin() {
 }
 
 function makeChart(id, type, labels, data, colors) {
-  if (adminCharts[id]) adminCharts[id].destroy();
-  var ctx = document.getElementById(id).getContext('2d');
+  if (adminCharts[id]) { try { adminCharts[id].destroy(); } catch(e) {} delete adminCharts[id]; }
+  // Canvas might have been replaced by "No data yet" text — recreate it
+  var wrapper = document.querySelector('[data-chart="'+id+'"]');
+  if (wrapper) {
+    wrapper.innerHTML = '<canvas id="'+id+'"></canvas>';
+  } else {
+    // Find by id — if it's a paragraph, replace parent
+    var existing = document.getElementById(id);
+    if (!existing) return;
+  }
+  var canvasEl = document.getElementById(id);
+  if (!canvasEl || canvasEl.tagName !== 'CANVAS') return;
+  var ctx = canvasEl.getContext('2d');
   adminCharts[id] = new Chart(ctx, {
     type: type,
     data: { labels: labels, datasets: [{ data: data, backgroundColor: colors, borderWidth: 0, borderRadius: type === 'bar' ? 6 : 0 }] },
@@ -663,7 +674,7 @@ function loadResponses() {
       Object.keys(_empEls).forEach(function(id){ var e=document.getElementById(id); if(e) e.textContent=_empEls[id]; });
       var _ac=document.getElementById('admin-count'); if(_ac) _ac.textContent='0 responses found';
       ['open-q5','open-q6'].forEach(function(id){ var e=document.getElementById(id); if(e) e.innerHTML='<p style="color:#a0c4b0;font-size:0.8rem;font-style:italic;">No responses yet</p>'; });
-      ['chart-q1','chart-q3','chart-nps','chart-region'].forEach(function(id){ var e=document.getElementById(id); if(e&&e.parentElement) e.parentElement.innerHTML='<p style="color:#a0c4b0;font-size:0.8rem;font-style:italic;padding:2rem;text-align:center;">No data yet</p>'; });
+      ['chart-q1','chart-q3','chart-nps','chart-region'].forEach(function(id){ var w=document.querySelector('[data-chart="'+id+'"]'); if(w) w.innerHTML='<p style="color:#a0c4b0;font-size:0.8rem;font-style:italic;padding:2rem;text-align:center;">No data yet</p>'; });
       return;
     }
     var docsWithKeys = Object.entries(raw).map(function(e){ return {key:e[0], data:e[1]}; }).sort(function(a,b){ return b.data.timestamp > a.data.timestamp ? 1 : -1; });
@@ -1059,11 +1070,11 @@ try {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
         <div style="background:#fff;border:1px solid #c8e6d4;border-radius:14px;padding:1.25rem;">
           <p style="color:#8ab09a;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.1em;font-weight:600;margin-bottom:10px;">Overall Satisfaction (Q1)</p>
-          <div style="position:relative;height:180px;"><canvas id="chart-q1"></canvas></div>
+          <div style="position:relative;height:180px;" data-chart="chart-q1"><canvas id="chart-q1"></canvas></div>
         </div>
         <div style="background:#fff;border:1px solid #c8e6d4;border-radius:14px;padding:1.25rem;">
           <p style="color:#8ab09a;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.1em;font-weight:600;margin-bottom:10px;">Path Clarity (Q3)</p>
-          <div style="position:relative;height:180px;"><canvas id="chart-q3"></canvas></div>
+          <div style="position:relative;height:180px;" data-chart="chart-q3"><canvas id="chart-q3"></canvas></div>
         </div>
       </div>
 
@@ -1071,11 +1082,11 @@ try {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
         <div style="background:#fff;border:1px solid #c8e6d4;border-radius:14px;padding:1.25rem;">
           <p style="color:#8ab09a;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.1em;font-weight:600;margin-bottom:10px;">NPS Distribution (Q7)</p>
-          <div style="position:relative;height:180px;"><canvas id="chart-nps"></canvas></div>
+          <div style="position:relative;height:180px;" data-chart="chart-nps"><canvas id="chart-nps"></canvas></div>
         </div>
         <div style="background:#fff;border:1px solid #c8e6d4;border-radius:14px;padding:1.25rem;">
           <p style="color:#8ab09a;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.1em;font-weight:600;margin-bottom:10px;">Responses by Region</p>
-          <div style="position:relative;height:180px;"><canvas id="chart-region"></canvas></div>
+          <div style="position:relative;height:180px;" data-chart="chart-region"><canvas id="chart-region"></canvas></div>
         </div>
       </div>
 
