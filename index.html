@@ -467,6 +467,15 @@ if (!checkAlreadySubmitted()) { /* survey ready */ } }
 var logoClickCount = 0, logoClickTimer = null;
 var adminCharts = {};
 
+function openAdminFromAlready() {
+  document.getElementById('admin-overlay').style.display = 'block';
+  document.getElementById('admin-login-view').style.display = 'flex';
+  document.getElementById('admin-data-view').style.display = 'none';
+  document.getElementById('admin-pass').value = '';
+  document.getElementById('admin-error').style.display = 'none';
+  setTimeout(function(){ document.getElementById('admin-pass').focus(); }, 200);
+}
+
 function logoClick() {
   logoClickCount++;
   clearTimeout(logoClickTimer);
@@ -950,13 +959,14 @@ try {
 
 
 <!-- ALREADY SUBMITTED SCREEN -->
-<div id="pg-already" style="display:none;min-height:100vh;background:#f4f9f4;align-items:center;justify-content:center;padding:2rem;font-family:'Montserrat',sans-serif;">
+<div id="pg-already" style="display:none;min-height:100vh;background:#f4f9f4;align-items:center;justify-content:center;padding:2rem;font-family:'Montserrat',sans-serif;flex-direction:column;">
   <div style="text-align:center;max-width:460px;">
     <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#2d7a4f,#4caf78);display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;font-size:30px;">✓</div>
     <p style="color:#8ab09a;font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;font-weight:600;margin-bottom:6px;" id="already-label">Already submitted</p>
     <h1 style="color:#1a4d32;font-size:1.5rem;font-weight:700;margin-bottom:0.85rem;" id="already-title">You already responded</h1>
-    <p style="color:#5a7a66;font-size:0.9rem;line-height:1.7;margin-bottom:2rem;" id="already-text">Thank you for participating in the Road to Chairman survey. Your response has already been recorded.</p>
+    <p style="color:#5a7a66;font-size:0.9rem;line-height:1.7;" id="already-text">Thank you for participating in the Road to Chairman survey. Your response has already been recorded.</p>
   </div>
+  <button onclick="openAdminFromAlready()" style="margin-top:3rem;background:transparent;border:none;color:#d0e8d8;font-size:0.62rem;font-family:'Montserrat',sans-serif;cursor:pointer;letter-spacing:0.1em;padding:0.5rem 1rem;">Admin</button>
 </div>
 
 
