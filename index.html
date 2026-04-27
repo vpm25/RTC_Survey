@@ -655,7 +655,11 @@ function openText(containerId, responses) {
   });
 }
 
+var loadVersion = 0;
+
 function loadResponses() {
+  loadVersion++;
+  var myVersion = loadVersion;
   document.getElementById('admin-loading').style.display = 'block';
   document.getElementById('admin-content').style.display = 'none';
   Object.values(adminCharts).forEach(function(c){ c.destroy(); }); adminCharts = {};
@@ -669,14 +673,16 @@ function loadResponses() {
       var _ac=document.getElementById('admin-count'); if(_ac) _ac.textContent='0 responses found';
       ['open-q5','open-q6'].forEach(function(id){ var e=document.getElementById(id); if(e) e.innerHTML='<p style="color:#a0c4b0;font-size:0.8rem;font-style:italic;">No responses yet</p>'; });
       ['chart-q1','chart-q3','chart-nps','chart-region'].forEach(function(id){ var w=document.querySelector('[data-chart="'+id+'"]'); if(w) w.innerHTML='<p style="color:#a0c4b0;font-size:0.8rem;font-style:italic;padding:2rem;text-align:center;">No data yet</p>'; });
+      buildResponsesTable([]);
       return;
     }
     var docsWithKeys = Object.entries(raw).map(function(e){ return {key:e[0], data:e[1]}; }).sort(function(a,b){ return b.data.timestamp > a.data.timestamp ? 1 : -1; });
     var docs = docsWithKeys.map(function(d){ return d.data; });
     cachedDocs = docs;
-    setTimeout(function(){ buildResponsesTable(docsWithKeys); }, 150);
+    (function(v, dwk){ setTimeout(function(){ if(loadVersion===v) buildResponsesTable(dwk); }, 150); })(myVersion, docsWithKeys);
     var total = docs.length;
     if(document.getElementById('kpi-total')) document.getElementById('kpi-total').textContent = total;
+    var _ac2=document.getElementById('admin-count'); if(_ac2) _ac2.textContent = total + ' response' + (total!==1?'s':'') + ' found';
 
     var npsSum = 0, npsCount = 0, satMap = {}, q3Map = {}, regionMap = {}, npsMap = {};
     var q5s = [], q6s = [];
@@ -732,7 +738,7 @@ function loadResponses() {
     var greens = ['#2d7a4f','#4caf78','#84cc9a','#a8dbb8','#c8e6d4','#dceee4'];
 
     // Q1 Chart
-    setTimeout(function(){
+    (function(v){ setTimeout(function(){ if(loadVersion!==v) return;
       var q1labels = Object.keys(satMap), q1data = Object.values(satMap);
       makeChart('chart-q1','bar',q1labels,q1data,greens.slice(0,q1labels.length));
 
@@ -755,7 +761,7 @@ function loadResponses() {
 
       openText('open-q5', q5s);
       openText('open-q6', q6s);
-    }, 100);
+    }, 100); })(myVersion);
 
   }).catch(function(err) {
     document.getElementById('admin-loading').style.display = 'none';
