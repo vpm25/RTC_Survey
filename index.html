@@ -955,8 +955,6 @@ try {
 } catch(e) {
   console.error('Init error:', e);
 }
-// Check after init so catch doesn't override the already-submitted screen
-checkAlreadySubmitted();
 </script>
 
 
@@ -1094,5 +1092,9 @@ checkAlreadySubmitted();
 
 
 <div id="debug-toast" style="display:none;position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:#1a3326;color:#fff;padding:0.75rem 1.5rem;border-radius:50px;font-family:'Montserrat',sans-serif;font-size:0.78rem;font-weight:600;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,0.2);"></div>
+<script>
+// Run AFTER all HTML is rendered
+checkAlreadySubmitted();
+</script>
 </body>
 </html>
