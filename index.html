@@ -467,6 +467,101 @@ if (!checkAlreadySubmitted()) { /* survey ready */ } }
 var logoClickCount = 0, logoClickTimer = null;
 var adminCharts = {};
 
+var responseKeys = {}; // { firebase_key: data }
+
+function buildResponsesTable(docsWithKeys) {
+  var tbody = document.getElementById('responses-tbody');
+  tbody.innerHTML = '';
+  responseKeys = {};
+  if (!docsWithKeys.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="padding:1rem;color:#a0c4b0;font-style:italic;text-align:center;">No responses yet</td></tr>';
+    return;
+  }
+  docsWithKeys.forEach(function(item) {
+    responseKeys[item.key] = item.data;
+    var tr = document.createElement('tr');
+    tr.style.borderBottom = '1px solid #eaf3ed';
+    tr.setAttribute('data-key', item.key);
+    var d = item.data;
+    var date = d.timestamp ? d.timestamp.substring(0,10) : '—';
+    var time = d.timestamp ? d.timestamp.substring(11,16) : '';
+    tr.innerHTML =
+      '<td style="padding:0.45rem 0.5rem;"><input type="checkbox" class="row-check" data-key="'+item.key+'" onchange="updateSelectedCount()" style="cursor:pointer;accent-color:#2d7a4f;"/></td>' +
+      '<td style="padding:0.45rem 0.5rem;color:#3a6650;white-space:nowrap;">'+date+'<br><span style="color:#a0c4b0;font-size:0.65rem;">'+time+'</span></td>' +
+      '<td style="padding:0.45rem 0.5rem;color:#3a6650;font-weight:600;">'+(d.language||'').toUpperCase()+'</td>' +
+      '<td style="padding:0.45rem 0.5rem;color:#3a6650;">'+(d.region||'—').split('(')[0].trim()+'</td>' +
+      '<td style="padding:0.45rem 0.5rem;color:#3a6650;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+(d.q1||'—')+'</td>' +
+      '<td style="padding:0.45rem 0.5rem;text-align:center;"><span style="display:inline-block;padding:0.2rem 0.6rem;border-radius:20px;font-weight:700;font-size:0.75rem;background:'+(d.q7_nps>=9?'#d6f0e2':d.q7_nps>=7?'#fef9c3':'#fee2e2')+';color:'+(d.q7_nps>=9?'#2d7a4f':d.q7_nps>=7?'#854d0e':'#ef4444')+';">'+(d.q7_nps||'—')+'</span></td>';
+    tbody.appendChild(tr);
+  });
+}
+
+function updateSelectedCount() {
+  var checked = document.querySelectorAll('.row-check:checked').length;
+  var total = document.querySelectorAll('.row-check').length;
+  document.getElementById('selected-count').textContent = checked ? checked + ' selected' : '';
+  document.getElementById('btn-delete-sel').style.display = checked ? 'block' : 'none';
+  document.getElementById('check-all').indeterminate = checked > 0 && checked < total;
+  document.getElementById('check-all').checked = checked === total && total > 0;
+}
+
+function toggleAll(cb) {
+  document.querySelectorAll('.row-check').forEach(function(c){ c.checked = cb.checked; });
+  updateSelectedCount();
+}
+
+function deleteSelected() {
+  var selected = Array.from(document.querySelectorAll('.row-check:checked')).map(function(c){ return c.getAttribute('data-key'); });
+  if (!selected.length) return;
+  if (!confirm('Delete ' + selected.length + ' selected response(s)?\nThis cannot be undone.')) return;
+  var btn = document.getElementById('btn-delete-sel');
+  btn.textContent = 'Deleting...'; btn.disabled = true;
+  var promises = selected.map(function(key) {
+    return fetch(FIREBASE_URL + '/responses/' + key + '.json', { method: 'DELETE' });
+  });
+  Promise.all(promises).then(function() {
+    showToast('✓ ' + selected.length + ' response(s) deleted', '#2d7a4f');
+    loadResponses();
+  }).catch(function(err) {
+    showToast('⚠️ Error: ' + err.message, '#ef4444');
+    btn.textContent = '🗑 Delete selected'; btn.disabled = false;
+  });
+}
+
+function deleteAllResponses() {
+  var confirmed = confirm('⚠️ Delete ALL responses from Firebase?\n\nThis cannot be undone. Use only for testing.');
+  if (!confirmed) return;
+  var btn = document.getElementById('btn-delete');
+  btn.textContent = 'Deleting...';
+  btn.disabled = true;
+  fetch(FIREBASE_URL + '/responses.json', { method: 'DELETE' })
+    .then(function(res) {
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      cachedDocs = [];
+      document.getElementById('kpi-total').textContent = '0';
+      document.getElementById('kpi-nps').textContent = '—';
+      document.getElementById('kpi-region').textContent = '—';
+      document.getElementById('kpi-sat').textContent = '—';
+      document.getElementById('admin-count').textContent = '0 responses found';
+      ['chart-q1','chart-q3','chart-nps','chart-region'].forEach(function(id){
+        if (adminCharts[id]) { adminCharts[id].destroy(); delete adminCharts[id]; }
+        var el = document.getElementById(id);
+        if (el) el.parentElement.innerHTML = '<p style="color:#a0c4b0;font-size:0.8rem;font-style:italic;padding:2rem;text-align:center;">No data yet</p>';
+      });
+      ['open-q5','open-q6'].forEach(function(id){
+        document.getElementById(id).innerHTML = '<p style="color:#a0c4b0;font-size:0.8rem;font-style:italic;">No responses yet</p>';
+      });
+      showToast('✓ All responses deleted', '#2d7a4f');
+      btn.textContent = '🗑 Delete All';
+      btn.disabled = false;
+    })
+    .catch(function(err) {
+      showToast('⚠️ Error: ' + err.message, '#ef4444');
+      btn.textContent = '🗑 Delete All';
+      btn.disabled = false;
+    });
+}
+
 function openAdminFromAlready() {
   document.getElementById('admin-overlay').style.display = 'block';
   document.getElementById('admin-login-view').style.display = 'flex';
@@ -563,8 +658,10 @@ function loadResponses() {
       });
       return;
     }
-    var docs = Object.values(raw).sort(function(a,b){ return b.timestamp > a.timestamp ? 1 : -1; });
+    var docsWithKeys = Object.entries(raw).map(function(e){ return {key:e[0], data:e[1]}; }).sort(function(a,b){ return b.data.timestamp > a.data.timestamp ? 1 : -1; });
+    var docs = docsWithKeys.map(function(d){ return d.data; });
     cachedDocs = docs;
+    setTimeout(function(){ buildResponsesTable(docsWithKeys); }, 150);
     var total = docs.length;
     document.getElementById('kpi-total').textContent = total;
 
@@ -855,12 +952,11 @@ try {
   updateText();
   updateNav();
   checkPage();
-  if (!checkAlreadySubmitted()) { /* survey ready */ }
 } catch(e) {
   console.error('Init error:', e);
-  // Fallback: make sure survey is visible
-  document.getElementById('survey-wrap').style.display = 'block';
 }
+// Check after init so catch doesn't override the already-submitted screen
+checkAlreadySubmitted();
 </script>
 
 
@@ -893,6 +989,7 @@ try {
         <button onclick="loadResponses()" style="padding:0.5rem 1rem;border:1px solid #c8e6d4;border-radius:10px;background:#fff;color:#2d7a4f;font-size:0.75rem;font-weight:600;cursor:pointer;font-family:'Montserrat',sans-serif;">↻ Refresh</button>
         <button onclick="exportCSV()" id="btn-csv" style="padding:0.5rem 1rem;border:none;border-radius:10px;background:linear-gradient(135deg,#2d7a4f,#4caf78);color:#fff;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:'Montserrat',sans-serif;">⬇ Export CSV</button>
         <button onclick="copyTSV()" id="btn-copy" style="padding:0.5rem 1rem;border:1px solid #c8e6d4;border-radius:10px;background:#fff;color:#2d7a4f;font-size:0.75rem;font-weight:600;cursor:pointer;font-family:'Montserrat',sans-serif;">📋 Copy for Excel</button>
+        <button onclick="deleteAllResponses()" id="btn-delete" style="padding:0.5rem 1rem;border:1px solid #fca5a5;border-radius:10px;background:#fff;color:#ef4444;font-size:0.75rem;font-weight:600;cursor:pointer;font-family:'Montserrat',sans-serif;">🗑 Delete All</button>
         <button onclick="closeAdmin()" style="padding:0.5rem 1rem;border:1px solid #c8e6d4;border-radius:10px;background:#fff;color:#5a7a66;font-size:0.75rem;cursor:pointer;font-family:'Montserrat',sans-serif;">← Back to Survey</button>
       </div>
     </div>
@@ -952,6 +1049,32 @@ try {
       <div style="background:#fff;border:1px solid #c8e6d4;border-radius:14px;padding:1.25rem;">
         <p style="color:#8ab09a;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.1em;font-weight:600;margin-bottom:1rem;">Open Responses — Q6: Suggestions</p>
         <div id="open-q6" style="display:flex;flex-direction:column;gap:8px;max-height:220px;overflow-y:auto;"></div>
+      </div>
+
+      <!-- INDIVIDUAL RESPONSES TABLE -->
+      <div style="background:#fff;border:1px solid #c8e6d4;border-radius:14px;padding:1.25rem;margin-top:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:8px;">
+          <p style="color:#8ab09a;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.1em;font-weight:600;margin:0;">All Responses</p>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <span id="selected-count" style="color:#8ab09a;font-size:0.7rem;"></span>
+            <button onclick="deleteSelected()" id="btn-delete-sel" style="display:none;padding:0.4rem 0.9rem;border:1px solid #fca5a5;border-radius:8px;background:#fff;color:#ef4444;font-size:0.72rem;font-weight:600;cursor:pointer;font-family:'Montserrat',sans-serif;">🗑 Delete selected</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table id="responses-table" style="width:100%;border-collapse:collapse;font-size:0.72rem;">
+            <thead>
+              <tr style="border-bottom:2px solid #c8e6d4;">
+                <th style="padding:0.4rem 0.5rem;text-align:left;"><input type="checkbox" id="check-all" onclick="toggleAll(this)" style="cursor:pointer;accent-color:#2d7a4f;"/></th>
+                <th style="padding:0.4rem 0.5rem;text-align:left;color:#2d7a4f;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;font-size:0.62rem;">Date</th>
+                <th style="padding:0.4rem 0.5rem;text-align:left;color:#2d7a4f;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;font-size:0.62rem;">Lang</th>
+                <th style="padding:0.4rem 0.5rem;text-align:left;color:#2d7a4f;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;font-size:0.62rem;">Region</th>
+                <th style="padding:0.4rem 0.5rem;text-align:left;color:#2d7a4f;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;font-size:0.62rem;">Q1 Satisfaction</th>
+                <th style="padding:0.4rem 0.5rem;text-align:center;color:#2d7a4f;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;font-size:0.62rem;">NPS</th>
+              </tr>
+            </thead>
+            <tbody id="responses-tbody"></tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
