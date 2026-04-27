@@ -837,6 +837,18 @@ function resetSurvey() {
   location.reload();
 }
 
+// Secret URL reset: add ?reset to URL to clear submission flag
+// e.g. https://vpm25.github.io/RTC_Survey/?reset
+(function() {
+  if (window.location.search.indexOf('reset') >= 0) {
+    try { localStorage.removeItem(SURVEY_KEY); } catch(e) {}
+    setCookie(SURVEY_KEY, '', -1);
+    // Clean URL and reload
+    window.history.replaceState({}, '', window.location.pathname);
+    console.log('✓ Survey reset — you can take it again');
+  }
+})();
+
 function updateAlreadyScreen() {
   var msgs = ALREADY_MSGS[lang] || ALREADY_MSGS['en'];
   document.getElementById('already-label').textContent = msgs[0];
