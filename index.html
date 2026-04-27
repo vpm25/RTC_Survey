@@ -100,6 +100,7 @@ input.other-input.show { display: block; }
   <div class="container">
 
     <div class="page active" id="page-0">
+      <div class="lang-banner" id="lang-banner"></div>
       <div class="card">
         <div class="q-num" id="q1-num"></div>
         <div class="q-text" id="q1-text"></div>
@@ -147,7 +148,6 @@ input.other-input.show { display: block; }
     </div>
 
     <div class="page" id="page-3">
-      <div class="lang-banner" id="lang-banner"></div>
       <div class="card">
         <div class="q-num" id="p0-qnum"></div>
         <div class="q-text" id="p0-qtext"></div>
@@ -322,7 +322,7 @@ function updateText() {
   document.getElementById('lang-banner').textContent = T.banner;
   if(document.getElementById('p0-lbl')) document.getElementById('p0-lbl').textContent = T.p0lbl;
   if(document.getElementById('p0-title')) document.getElementById('p0-title').textContent = T.p0title;
-  document.getElementById('p0-qnum').textContent = T.q + ' 1';
+  document.getElementById('p0-qnum').textContent = T.q + ' 8';
   document.getElementById('p0-qtext').textContent = T.p0q;
   if(document.getElementById('p1-lbl')) document.getElementById('p1-lbl').textContent = T.s1lbl;
   if(document.getElementById('p1-title')) document.getElementById('p1-title').textContent = T.s1title;
@@ -788,33 +788,52 @@ var ALREADY_MSGS = {
 
 var SURVEY_KEY = 'rtc_survey_submitted_v1';
 
-function checkAlreadySubmitted() {
+// Cookie helpers as fallback
+function setCookie(name, val, days) {
   try {
-    if (localStorage.getItem(SURVEY_KEY)) {
-      var T = LANGS[lang];
-      var msgs = ALREADY_MSGS[lang] || ALREADY_MSGS['en'];
-      document.getElementById('already-label').textContent = msgs[0];
-      document.getElementById('already-title').textContent = msgs[1];
-      document.getElementById('already-text').textContent = msgs[2];
-      document.getElementById('survey-wrap').style.display = 'none';
-      var pa = document.getElementById('pg-already');
-      pa.style.display = 'flex';
-      pa.style.minHeight = '100vh';
-      pa.style.alignItems = 'center';
-      pa.style.justifyContent = 'center';
-      pa.style.background = '#f4f9f4';
-      return true;
-    }
-  } catch(e) { console.warn('localStorage error:', e); }
-  return false;
+    var d = new Date(); d.setTime(d.getTime() + days*24*60*60*1000);
+    document.cookie = name + '=' + val + ';expires=' + d.toUTCString() + ';path=/;SameSite=Lax';
+  } catch(e) {}
+}
+function getCookie(name) {
+  try {
+    var v = document.cookie.match('(^|;)\s*' + name + '\s*=\s*([^;]+)');
+    return v ? v.pop() : null;
+  } catch(e) { return null; }
+}
+
+function isSubmitted() {
+  try { if (localStorage.getItem(SURVEY_KEY)) return true; } catch(e) {}
+  return !!getCookie(SURVEY_KEY);
 }
 
 function markSubmitted() {
   try { localStorage.setItem(SURVEY_KEY, '1'); } catch(e) {}
+  setCookie(SURVEY_KEY, '1', 365);
+}
+
+function checkAlreadySubmitted() {
+  if (!isSubmitted()) return false;
+  var msgs = ALREADY_MSGS[lang] || ALREADY_MSGS['en'];
+  var elLabel = document.getElementById('already-label');
+  var elTitle = document.getElementById('already-title');
+  var elText  = document.getElementById('already-text');
+  if (!elLabel || !elTitle || !elText) return false;
+  elLabel.textContent = msgs[0];
+  elTitle.textContent = msgs[1];
+  elText.textContent  = msgs[2];
+  var sw = document.getElementById('survey-wrap');
+  if (sw) sw.style.display = 'none';
+  var pa = document.getElementById('pg-already');
+  if (pa) {
+    pa.style.cssText = 'display:flex;min-height:100vh;background:#f4f9f4;align-items:center;justify-content:center;padding:2rem;font-family:Montserrat,sans-serif;flex-direction:column;';
+  }
+  return true;
 }
 
 function resetSurvey() {
   try { localStorage.removeItem(SURVEY_KEY); } catch(e) {}
+  setCookie(SURVEY_KEY, '', -1);
   location.reload();
 }
 
@@ -1093,8 +1112,12 @@ try {
 
 <div id="debug-toast" style="display:none;position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:#1a3326;color:#fff;padding:0.75rem 1.5rem;border-radius:50px;font-family:'Montserrat',sans-serif;font-size:0.78rem;font-weight:600;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,0.2);"></div>
 <script>
-// Run AFTER all HTML is rendered
-checkAlreadySubmitted();
+// Run AFTER all HTML is rendered — using DOMContentLoaded to guarantee elements exist
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', function() { checkAlreadySubmitted(); });
+} else {
+  checkAlreadySubmitted();
+}
 </script>
 </body>
 </html>
