@@ -542,7 +542,7 @@ function deleteAllResponses() {
       document.getElementById('kpi-nps').textContent = '—';
       document.getElementById('kpi-region').textContent = '—';
       document.getElementById('kpi-sat').textContent = '—';
-      document.getElementById('admin-count').textContent = '0 responses found';
+      if(document.getElementById('admin-count')) document.getElementById('admin-count').textContent = '0 responses found';
       ['chart-q1','chart-q3','chart-nps','chart-region'].forEach(function(id){
         if (adminCharts[id]) { adminCharts[id].destroy(); delete adminCharts[id]; }
         var el = document.getElementById(id);
@@ -1026,6 +1026,7 @@ try {
     <div id="admin-loading" style="text-align:center;padding:4rem;color:#8ab09a;font-size:0.9rem;">Loading responses...</div>
 
     <div id="admin-content" style="display:none;">
+      <p id="admin-count" style="color:#8ab09a;font-size:0.72rem;font-weight:500;margin-bottom:0.75rem;"></p>
       <!-- KPI Cards -->
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.25rem;">
         <div style="background:#fff;border:1px solid #c8e6d4;border-radius:14px;padding:1rem;text-align:center;">
