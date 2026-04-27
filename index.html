@@ -516,29 +516,29 @@ function deleteSelected() {
   if (!confirm('Delete ' + selected.length + ' selected response(s)?\nThis cannot be undone.')) return;
   var btn = document.getElementById('btn-delete-sel');
   btn.textContent = 'Deleting...'; btn.disabled = true;
-  console.log('Deleting keys:', selected);
-  var promises = selected.map(function(key) {
+  var total = selected.length;
+  var done = 0;
+  var errors = 0;
+  selected.forEach(function(key) {
     var url = FIREBASE_URL + '/responses/' + key + '.json';
-    console.log('DELETE:', url);
-    return fetch(url, { method: 'DELETE' })
+    fetch(url, { method: 'DELETE' })
       .then(function(res) {
-        console.log('DELETE', key, 'status:', res.status);
-        return res;
+        if (!res.ok) errors++;
+      })
+      .catch(function() { errors++; })
+      .then(function() {
+        done++;
+        if (done === total) {
+          if (errors === 0) {
+            showToast('✓ ' + total + ' response(s) deleted', '#2d7a4f');
+          } else {
+            showToast('⚠️ ' + errors + ' error(s) — check Firebase rules', '#ef4444');
+          }
+          btn.textContent = '🗑 Delete selected';
+          btn.disabled = false;
+          loadResponses();
+        }
       });
-  });
-  Promise.all(promises).then(function() {
-    showToast('✓ ' + selected.length + ' response(s) deleted', '#2d7a4f');
-    setTimeout(function(){ loadResponses(); }, 500);
-  }).catch(function(err) {
-    showToast('⚠️ Error: ' + err.message, '#ef4444');
-    btn.textContent = '🗑 Delete selected'; btn.disabled = false;
-  }).finally(function() {
-    setTimeout(function(){
-      if (btn.disabled) {
-        btn.textContent = '🗑 Delete selected';
-        btn.disabled = false;
-      }
-    }, 4000);
   });
 }
 
@@ -626,19 +626,13 @@ function adminLogin() {
 }
 
 function makeChart(id, type, labels, data, colors) {
+  // Destroy old chart
   if (adminCharts[id]) { try { adminCharts[id].destroy(); } catch(e) {} delete adminCharts[id]; }
-  // Canvas might have been replaced by "No data yet" text — recreate it
+  // Always recreate canvas inside wrapper
   var wrapper = document.querySelector('[data-chart="'+id+'"]');
-  if (wrapper) {
-    wrapper.innerHTML = '<canvas id="'+id+'"></canvas>';
-  } else {
-    // Find by id — if it's a paragraph, replace parent
-    var existing = document.getElementById(id);
-    if (!existing) return;
-  }
-  var canvasEl = document.getElementById(id);
-  if (!canvasEl || canvasEl.tagName !== 'CANVAS') return;
-  var ctx = canvasEl.getContext('2d');
+  if (!wrapper) return;
+  wrapper.innerHTML = '<canvas id="'+id+'"></canvas>';
+  var ctx = document.getElementById(id).getContext('2d');
   adminCharts[id] = new Chart(ctx, {
     type: type,
     data: { labels: labels, datasets: [{ data: data, backgroundColor: colors, borderWidth: 0, borderRadius: type === 'bar' ? 6 : 0 }] },
