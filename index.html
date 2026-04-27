@@ -538,15 +538,15 @@ function deleteAllResponses() {
     .then(function(res) {
       if (!res.ok) throw new Error('HTTP ' + res.status);
       cachedDocs = [];
-      document.getElementById('kpi-total').textContent = '0';
-      document.getElementById('kpi-nps').textContent = '—';
-      document.getElementById('kpi-region').textContent = '—';
-      document.getElementById('kpi-sat').textContent = '—';
-      if(document.getElementById('admin-count')) document.getElementById('admin-count').textContent = '0 responses found';
+      if(document.getElementById('kpi-total')) document.getElementById('kpi-total').textContent = '0';
+      if(document.getElementById('kpi-nps')) document.getElementById('kpi-nps').textContent = '—';
+      if(document.getElementById('kpi-region')) document.getElementById('kpi-region').textContent = '—';
+      if(document.getElementById('kpi-sat')) document.getElementById('kpi-sat').textContent = '—';
+      var _ac=document.getElementById('admin-count'); if(_ac) _ac.textContent = '0 responses found';
       ['chart-q1','chart-q3','chart-nps','chart-region'].forEach(function(id){
         if (adminCharts[id]) { adminCharts[id].destroy(); delete adminCharts[id]; }
         var el = document.getElementById(id);
-        if (el) el.parentElement.innerHTML = '<p style="color:#a0c4b0;font-size:0.8rem;font-style:italic;padding:2rem;text-align:center;">No data yet</p>';
+        if (el && el.parentElement) el.parentElement.innerHTML = '<p style="color:#a0c4b0;font-size:0.8rem;font-style:italic;padding:2rem;text-align:center;">No data yet</p>';
       });
       ['open-q5','open-q6'].forEach(function(id){
         document.getElementById(id).innerHTML = '<p style="color:#a0c4b0;font-size:0.8rem;font-style:italic;">No responses yet</p>';
@@ -645,17 +645,11 @@ function loadResponses() {
     document.getElementById('admin-loading').style.display = 'none';
     document.getElementById('admin-content').style.display = 'block';
     if (!raw) {
-      document.getElementById('kpi-total').textContent = '0';
-      document.getElementById('kpi-nps').textContent = '—';
-      document.getElementById('kpi-region').textContent = '—';
-      document.getElementById('kpi-sat').textContent = '—';
-      ['open-q5','open-q6'].forEach(function(id){
-        document.getElementById(id).innerHTML = '<p style="color:#a0c4b0;font-size:0.8rem;font-style:italic;">No responses yet</p>';
-      });
-      ['chart-q1','chart-q3','chart-nps','chart-region'].forEach(function(id){
-        var ctx = document.getElementById(id);
-        ctx.parentElement.innerHTML = '<p style="color:#a0c4b0;font-size:0.8rem;font-style:italic;padding:2rem;text-align:center;">No data yet</p>';
-      });
+      var _empEls = {'kpi-total':'0','kpi-nps':'—','kpi-region':'—','kpi-sat':'—'};
+      Object.keys(_empEls).forEach(function(id){ var e=document.getElementById(id); if(e) e.textContent=_empEls[id]; });
+      var _ac=document.getElementById('admin-count'); if(_ac) _ac.textContent='0 responses found';
+      ['open-q5','open-q6'].forEach(function(id){ var e=document.getElementById(id); if(e) e.innerHTML='<p style="color:#a0c4b0;font-size:0.8rem;font-style:italic;">No responses yet</p>'; });
+      ['chart-q1','chart-q3','chart-nps','chart-region'].forEach(function(id){ var e=document.getElementById(id); if(e&&e.parentElement) e.parentElement.innerHTML='<p style="color:#a0c4b0;font-size:0.8rem;font-style:italic;padding:2rem;text-align:center;">No data yet</p>'; });
       return;
     }
     var docsWithKeys = Object.entries(raw).map(function(e){ return {key:e[0], data:e[1]}; }).sort(function(a,b){ return b.data.timestamp > a.data.timestamp ? 1 : -1; });
@@ -663,7 +657,7 @@ function loadResponses() {
     cachedDocs = docs;
     setTimeout(function(){ buildResponsesTable(docsWithKeys); }, 150);
     var total = docs.length;
-    document.getElementById('kpi-total').textContent = total;
+    if(document.getElementById('kpi-total')) document.getElementById('kpi-total').textContent = total;
 
     var npsSum = 0, npsCount = 0, satMap = {}, q3Map = {}, regionMap = {}, npsMap = {};
     var q5s = [], q6s = [];
@@ -695,10 +689,10 @@ function loadResponses() {
     });
 
     var avgNps = npsCount ? (npsSum/npsCount).toFixed(1) : '—';
-    document.getElementById('kpi-nps').textContent = avgNps;
+    if(document.getElementById('kpi-nps')) document.getElementById('kpi-nps').textContent = avgNps;
 
     var topRegion = Object.entries(regionMap).sort(function(a,b){return b[1]-a[1];})[0];
-    document.getElementById('kpi-region').textContent = topRegion ? topRegion[0] : '—';
+    if(document.getElementById('kpi-region')) document.getElementById('kpi-region').textContent = topRegion ? topRegion[0] : '—';
 
     // Avg satisfaction score (1-5)
     var satScore = 0, satCount = 0;
@@ -714,7 +708,7 @@ function loadResponses() {
       }
     });
     var satAvg = satCount ? (satScore/satCount).toFixed(1) : '—';
-    document.getElementById('kpi-sat').textContent = satAvg !== '—' ? satAvg + '/5' : '—';
+    if(document.getElementById('kpi-sat')) document.getElementById('kpi-sat').textContent = satAvg !== '—' ? satAvg + '/5' : '—';
 
     var greens = ['#2d7a4f','#4caf78','#84cc9a','#a8dbb8','#c8e6d4','#dceee4'];
 
