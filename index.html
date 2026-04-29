@@ -693,15 +693,39 @@ function loadResponses() {
         var nps = parseInt(d.q7_nps);
         if (!isNaN(nps)) { npsSum += nps; npsCount++; npsMap[nps] = (npsMap[nps]||0)+1; }
       }
-      // Q1 satisfaction
+      // Q1 satisfaction — normalize across languages
       if (d.q1) {
-        var key = d.q1.split('—')[0].trim().split(' ').slice(0,2).join(' ');
-        satMap[key] = (satMap[key]||0)+1;
+        var q1l = d.q1.toLowerCase();
+        var q1key;
+        if (q1l.indexOf('very sat') >= 0 || q1l.indexOf('muy sat') >= 0 || q1l.indexOf('très sat') >= 0 || q1l.indexOf('sehr zuf') >= 0 || q1l.indexOf('molto sodd') >= 0 || q1l.indexOf('очень дов') >= 0 || q1l.indexOf('非常滿意') >= 0 || q1l.indexOf('非常に満足') >= 0 || q1l.indexOf('매우 만족') >= 0 || q1l.indexOf('çok mem') >= 0 || q1l.indexOf('bardzo zad') >= 0 || q1l.indexOf('дуже задов') >= 0 || q1l.indexOf('velmi spok') >= 0 || q1l.indexOf('veľmi spok') >= 0 || q1l.indexOf('foarte mul') >= 0 || q1l.indexOf('बहुत संतुष्ट') >= 0 || q1l.indexOf('nagyon elég') >= 0 || q1l.indexOf('sangat puas') >= 0 || q1l.indexOf('மிகவும் திருப்தி') >= 0 || q1l.indexOf('చాలా సంతృప்తి') >= 0 || q1l.indexOf('ತುಂಬಾ ತೃಪ್ತ') >= 0 || q1l.indexOf('വളരെ സംതൃ') >= 0 || q1l.indexOf('өте қанаға') >= 0 || q1l.indexOf('маш их сэт') >= 0 || q1l.indexOf('juda mamn') >= 0) {
+          q1key = '1. Very satisfied';
+        } else if (q1l.indexOf('somewhat sat') >= 0 || q1l.indexOf('algo sat') >= 0 || q1l.indexOf('plutôt sat') >= 0 || q1l.indexOf('eher zuf') >= 0 || q1l.indexOf('abbastanza sodd') >= 0 || q1l.indexOf('скорее дов') >= 0 || q1l.indexOf('有些滿意') >= 0 || q1l.indexOf('ある程度満足') >= 0 || q1l.indexOf('다소 만족') >= 0 || q1l.indexOf('biraz mem') >= 0 || q1l.indexOf('dość zad') >= 0 || q1l.indexOf('скоріше задов') >= 0 || q1l.indexOf('poměrně spok') >= 0 || q1l.indexOf('pomerne spok') >= 0 || q1l.indexOf('oarecum mul') >= 0 || q1l.indexOf('कुछ हद तक संतुष्ट') >= 0 || q1l.indexOf('kissé elég') >= 0 || q1l.indexOf('cukup puas') >= 0 || q1l.indexOf('சற்று திருப்தி') >= 0 || q1l.indexOf('కొంచెం సంతృ') >= 0 || q1l.indexOf('ಸ್ವಲ್ಪ ತೃಪ್ತ') >= 0 || q1l.indexOf('ഒരു പരിധി') >= 0 || q1l.indexOf('біршама қана') >= 0 || q1l.indexOf('тодорхой хэм') >= 0 || q1l.indexOf('biroz mamn') >= 0) {
+          q1key = '2. Somewhat satisfied';
+        } else if (q1l.indexOf('neither') >= 0 || q1l.indexOf('ni sat') >= 0 || q1l.indexOf('ni sat') >= 0 || q1l.indexOf('weder') >= 0 || q1l.indexOf('né sodd') >= 0 || q1l.indexOf('ни дов') >= 0 || q1l.indexOf('既不') >= 0 || q1l.indexOf('どちらでもない') >= 0 || q1l.indexOf('만족도 불만족') >= 0 || q1l.indexOf('ne mem') >= 0 || q1l.indexOf('ani zad') >= 0 || q1l.indexOf('ні задов') >= 0 || q1l.indexOf('ani spok') >= 0 || q1l.indexOf('nici mul') >= 0 || q1l.indexOf('न संतुष्ट') >= 0 || q1l.indexOf('se eléged') >= 0 || q1l.indexOf('tidak puas') >= 0 || q1l.indexOf('நடுநிலை') >= 0 || q1l.indexOf('తటస్థం') >= 0 || q1l.indexOf('ತಟಸ್ಥ') >= 0 || q1l.indexOf('നിഷ്പക്ഷം') >= 0 || q1l.indexOf('қанағатта') >= 0 || q1l.indexOf('сэтгэл хана') >= 0 || q1l.indexOf('na mamn') >= 0) {
+          q1key = '3. Neutral';
+        } else if (q1l.indexOf('somewhat dis') >= 0 || q1l.indexOf('algo ins') >= 0 || q1l.indexOf('plutôt ins') >= 0 || q1l.indexOf('eher unzuf') >= 0 || q1l.indexOf('abbastanza insodd') >= 0 || q1l.indexOf('скорее нед') >= 0 || q1l.indexOf('有些不滿') >= 0 || q1l.indexOf('あまり満足') >= 0 || q1l.indexOf('다소 불만족') >= 0 || q1l.indexOf('biraz mem') >= 0 || q1l.indexOf('dość niezad') >= 0 || q1l.indexOf('скоріше незад') >= 0 || q1l.indexOf('poměrně nespok') >= 0 || q1l.indexOf('pomerne nespok') >= 0 || q1l.indexOf('oarecum nemul') >= 0 || q1l.indexOf('कुछ हद तक असंतुष्ट') >= 0 || q1l.indexOf('kissé eléged') >= 0 || q1l.indexOf('cukup tidak') >= 0 || q1l.indexOf('சற்று அதிருப்') >= 0 || q1l.indexOf('కొంచెం అసంతృ') >= 0 || q1l.indexOf('ಸ್ವಲ್ಪ ಅತೃ') >= 0 || q1l.indexOf('ഒരു പരിധി അ') >= 0 || q1l.indexOf('біршама нара') >= 0 || q1l.indexOf('тодорхой хэм дур') >= 0 || q1l.indexOf('biroz norozi') >= 0) {
+          q1key = '4. Somewhat dissatisfied';
+        } else {
+          q1key = '5. Very dissatisfied';
+        }
+        satMap[q1key] = (satMap[q1key]||0)+1;
       }
-      // Q3 clarity
+      // Q3 clarity — normalize across languages
       if (d.q3) {
-        var key = d.q3.split('—')[0].trim().split(' ').slice(0,2).join(' ');
-        q3Map[key] = (q3Map[key]||0)+1;
+        var q3l = d.q3.toLowerCase();
+        var q3key;
+        if (q3l.indexOf('very clear') >= 0 || q3l.indexOf('muy claro') >= 0 || q3l.indexOf('très clair') >= 0 || q3l.indexOf('sehr klar') >= 0 || q3l.indexOf('molto chiar') >= 0 || q3l.indexOf('molto') >= 0 || q3l.indexOf('очень ясен') >= 0 || q3l.indexOf('非常清晰') >= 0 || q3l.indexOf('非常明確') >= 0 || q3l.indexOf('매우 명확') >= 0 || q3l.indexOf('çok net') >= 0 || q3l.indexOf('bardzo jasna') >= 0 || q3l.indexOf('дуже чіткий') >= 0 || q3l.indexOf('velmi jasná') >= 0 || q3l.indexOf('veľmi jasná') >= 0 || q3l.indexOf('foarte clar') >= 0 || q3l.indexOf('बहुत स्पष्ट') >= 0 || q3l.indexOf('nagyon egyértelmű') >= 0 || q3l.indexOf('sangat jelas') >= 0 || q3l.indexOf('தெளிவாக') >= 0 || q3l.indexOf('చాలా స్పష్టంగా') >= 0 || q3l.indexOf('ತುಂಬಾ ಸ್ಪಷ್ಟ') >= 0 || q3l.indexOf('വളരെ വ്യക്തം') >= 0 || q3l.indexOf('өте анық') >= 0 || q3l.indexOf('маш тодорхой') >= 0 || q3l.indexOf('juda ravshan') >= 0) {
+          q3key = '1. Very clear';
+        } else if (q3l.indexOf('fairly') >= 0 || q3l.indexOf('bastante') >= 0 || q3l.indexOf('assez') >= 0 || q3l.indexOf('ziemlich') >= 0 || q3l.indexOf('abbastanza') >= 0 || q3l.indexOf('достаточно') >= 0 || q3l.indexOf('相當') >= 0 || q3l.indexOf('かなり') >= 0 || q3l.indexOf('꽤') >= 0 || q3l.indexOf('oldukça') >= 0 || q3l.indexOf('dość') >= 0 || q3l.indexOf('досить') >= 0 || q3l.indexOf('poměrně') >= 0 || q3l.indexOf('pomerne') >= 0 || q3l.indexOf('destul') >= 0 || q3l.indexOf('काफी') >= 0 || q3l.indexOf('elég') >= 0 || q3l.indexOf('cukup') >= 0 || q3l.indexOf('hangalttai') >= 0 || q3l.indexOf('ancha') >= 0) {
+          q3key = '2. Fairly clear';
+        } else if (q3l.indexOf('somewhat') >= 0 || q3l.indexOf('algo') >= 0 || q3l.indexOf('un peu') >= 0 || q3l.indexOf('einigermaßen') >= 0 || q3l.indexOf('немного') >= 0 || q3l.indexOf('有些') >= 0 || q3l.indexOf('ある程度') >= 0 || q3l.indexOf('다소') >= 0 || q3l.indexOf('biraz') >= 0 || q3l.indexOf('dość jasna') >= 0 || q3l.indexOf('певною') >= 0 || q3l.indexOf('poněkud') >= 0 || q3l.indexOf('čiastočne') >= 0 || q3l.indexOf('oarecum') >= 0 || q3l.indexOf('कुछ') >= 0 || q3l.indexOf('valamennyire') >= 0 || q3l.indexOf('agak') >= 0 || q3l.indexOf('sற்று') >= 0 || q3l.indexOf('కొంచెం') >= 0 || q3l.indexOf('ಸ್ವಲ್ಪ') >= 0 || q3l.indexOf('ഒരു') >= 0 || q3l.indexOf('ішінара') >= 0 || q3l.indexOf('тодорхой хэмжээ') >= 0 || q3l.indexOf('biroz') >= 0) {
+          q3key = '3. Somewhat clear';
+        } else if (q3l.indexOf('not very') >= 0 || q3l.indexOf('no muy') >= 0 || q3l.indexOf('pas très') >= 0 || q3l.indexOf('nicht sehr') >= 0 || q3l.indexOf('не очень') >= 0 || q3l.indexOf('不太') >= 0 || q3l.indexOf('あまり') >= 0 || q3l.indexOf('그다지') >= 0 || q3l.indexOf('pek net') >= 0 || q3l.indexOf('niezbyt') >= 0 || q3l.indexOf('не дуже') >= 0 || q3l.indexOf('není příliš') >= 0 || q3l.indexOf('nie veľmi') >= 0 || q3l.indexOf('nu prea') >= 0 || q3l.indexOf('बहुत स्पष्ट नहीं') >= 0 || q3l.indexOf('nem nagyon') >= 0 || q3l.indexOf('tidak terlalu') >= 0 || q3l.indexOf('அதிக') >= 0 || q3l.indexOf('అంత') >= 0 || q3l.indexOf('ಅಷ್ಟೊಂದು') >= 0 || q3l.indexOf('അത്ര') >= 0 || q3l.indexOf('онша') >= 0 || q3l.indexOf('тийм') >= 0 || q3l.indexOf('unchalik') >= 0) {
+          q3key = '4. Not very clear';
+        } else {
+          q3key = '5. Not clear at all';
+        }
+        q3Map[q3key] = (q3Map[q3key]||0)+1;
       }
       // Region
       if (d.region) {
