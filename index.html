@@ -727,9 +727,29 @@ function loadResponses() {
         }
         q3Map[q3key] = (q3Map[q3key]||0)+1;
       }
-      // Region
+      // Region — normalize across languages
       if (d.region) {
-        var rkey = d.region.split('(')[0].trim();
+        var rl = d.region.toLowerCase();
+        var rkey;
+        if (rl.indexOf('apac') >= 0 || rl.indexOf('asia') >= 0 || rl.indexOf('アジア') >= 0 || rl.indexOf('亞太') >= 0 || rl.indexOf('아시아') >= 0) {
+          rkey = 'APAC';
+        } else if (rl.indexOf('china') >= 0 || rl.indexOf('中国') >= 0 || rl.indexOf('중국') >= 0 || rl.indexOf('chine') >= 0 || rl.indexOf('中國') >= 0 || rl.indexOf('китай') >= 0 || rl.indexOf('хятад') >= 0) {
+          rkey = 'China';
+        } else if (rl.indexOf('e&a') >= 0 || rl.indexOf('europ') >= 0 || rl.indexOf('ヨーロッパ') >= 0 || rl.indexOf('유럽') >= 0 || rl.indexOf('европ') >= 0 || rl.indexOf('europa') >= 0 || rl.indexOf('европ') >= 0) {
+          rkey = 'E&A';
+        } else if (rl.indexOf('em') >= 0 || rl.indexOf('eurasian') >= 0 || rl.indexOf('eurasia') >= 0 || rl.indexOf('евраз') >= 0 || rl.indexOf('유라시아') >= 0 || rl.indexOf('ユーラシア') >= 0 || rl.indexOf('еурази') >= 0) {
+          rkey = 'EM';
+        } else if (rl.indexOf('india') >= 0 || rl.indexOf('inde') >= 0 || rl.indexOf('indien') >= 0 || rl.indexOf('インド') >= 0 || rl.indexOf('인도') >= 0 || rl.indexOf('भारत') >= 0 || rl.indexOf('インド') >= 0 || rl.indexOf('үндістан') >= 0 || rl.indexOf('энэтхэг') >= 0) {
+          rkey = 'India';
+        } else if (rl.indexOf('mexico') >= 0 || rl.indexOf('méxico') >= 0 || rl.indexOf('mexique') >= 0 || rl.indexOf('メキシコ') >= 0 || rl.indexOf('멕시코') >= 0 || rl.indexOf('мексик') >= 0 || rl.indexOf('मेक्सिको') >= 0 || rl.indexOf('meksik') >= 0) {
+          rkey = 'Mexico';
+        } else if (rl.indexOf('samcam') >= 0 || rl.indexOf('brazil') >= 0 || rl.indexOf('brasil') >= 0 || rl.indexOf('brésil') >= 0 || rl.indexOf('brasile') >= 0 || rl.indexOf('ブラジル') >= 0 || rl.indexOf('브라질') >= 0 || rl.indexOf('бразил') >= 0 || rl.indexOf('ब्राजील') >= 0) {
+          rkey = 'SAMCAM/Brazil';
+        } else if (rl.indexOf('north america') >= 0 || rl.indexOf('norteamérica') >= 0 || rl.indexOf('amérique du nord') >= 0 || rl.indexOf('nordamerika') >= 0 || rl.indexOf('nord america') >= 0 || rl.indexOf('северная америка') >= 0 || rl.indexOf('北美') >= 0 || rl.indexOf('북미') >= 0 || rl.indexOf('kuzey amerika') >= 0 || rl.indexOf('ameryka północna') >= 0 || rl.indexOf('північна америка') >= 0 || rl.indexOf('severní amerika') >= 0 || rl.indexOf('america de nord') >= 0 || rl.indexOf('उत्तरी अमेरिका') >= 0 || rl.indexOf('észak-amerika') >= 0 || rl.indexOf('shimoliy') >= 0) {
+          rkey = 'North America';
+        } else {
+          rkey = 'Other';
+        }
         regionMap[rkey] = (regionMap[rkey]||0)+1;
       }
       // Open text
@@ -912,6 +932,31 @@ function showToast(msg, color) {
 // ── EXPORT FUNCTIONS ─────────────────────────────────────────────────────────
 var cachedDocs = [];
 
+// Normalize satisfaction/agreement answers to English for export
+function normalizeSat(val) {
+  if (!val) return '';
+  var v = val.toLowerCase();
+  if (v.indexOf('very sat') >= 0 || v.indexOf('muy sat') >= 0 || v.indexOf('très sat') >= 0 || v.indexOf('sehr zuf') >= 0 || v.indexOf('molto sodd') >= 0 || v.indexOf('очень') >= 0 || v.indexOf('非常滿意') >= 0 || v.indexOf('非常に満足') >= 0 || v.indexOf('매우 만족') >= 0 || v.indexOf('çok mem') >= 0 || v.indexOf('bardzo zad') >= 0 || v.indexOf('nagyon elég') >= 0 || v.indexOf('sangat puas') >= 0 || v.indexOf('juda mamn') >= 0) return 'Very Satisfied';
+  if (v.indexOf('somewhat sat') >= 0 || v.indexOf('algo sat') >= 0 || v.indexOf('plutôt sat') >= 0 || v.indexOf('eher zuf') >= 0 || v.indexOf('abbastanza') >= 0 || v.indexOf('скорее') >= 0 || v.indexOf('有些滿意') >= 0 || v.indexOf('ある程度') >= 0 || v.indexOf('다소 만족') >= 0 || v.indexOf('dość zad') >= 0 || v.indexOf('cukup puas') >= 0 || v.indexOf('biroz mamn') >= 0) return 'Somewhat Satisfied';
+  if (v.indexOf('neither') >= 0 || v.indexOf('ni sat') >= 0 || v.indexOf('weder') >= 0 || v.indexOf('né sodd') >= 0 || v.indexOf('ни дов') >= 0 || v.indexOf('既不') >= 0 || v.indexOf('どちら') >= 0 || v.indexOf('만족도 불') >= 0 || v.indexOf('ani zad') >= 0 || v.indexOf('tidak puas mau') >= 0 || v.indexOf('na mamn') >= 0 || v.indexOf('neutral') >= 0 || v.indexOf('neutre') >= 0 || v.indexOf('neutro') >= 0) return 'Neutral';
+  if (v.indexOf('somewhat dis') >= 0 || v.indexOf('algo ins') >= 0 || v.indexOf('plutôt ins') >= 0 || v.indexOf('eher unzuf') >= 0 || v.indexOf('abbastanza insodd') >= 0 || v.indexOf('скорее нед') >= 0 || v.indexOf('有些不滿') >= 0 || v.indexOf('あまり') >= 0 || v.indexOf('다소 불만') >= 0 || v.indexOf('dość niezad') >= 0 || v.indexOf('cukup tidak') >= 0 || v.indexOf('biroz norozi') >= 0) return 'Somewhat Dissatisfied';
+  if (v.indexOf('very dis') >= 0 || v.indexOf('muy ins') >= 0 || v.indexOf('très ins') >= 0 || v.indexOf('sehr unzuf') >= 0 || v.indexOf('molto insodd') >= 0 || v.indexOf('очень нед') >= 0 || v.indexOf('非常不滿') >= 0 || v.indexOf('全く不満') >= 0 || v.indexOf('매우 불만') >= 0 || v.indexOf('bardzo niezad') >= 0 || v.indexOf('sangat tidak') >= 0 || v.indexOf('juda norozi') >= 0) return 'Very Dissatisfied';
+  if (v === 'n/a' || v === 'н/п' || v === 'н/з' || v === 'n/d' || v === 't/a' || v === 't/b' || v.indexOf('لا ينطبق') >= 0) return 'N/A';
+  return val; // fallback: keep original
+}
+
+function normalizeAgr(val) {
+  if (!val) return '';
+  var v = val.toLowerCase();
+  if (v.indexOf('strongly agree') >= 0 || v.indexOf('muy de acuerdo') >= 0 || v.indexOf('tout à fait') >= 0 || v.indexOf('concordo plenamente') >= 0 || v.indexOf('stimme voll') >= 0 || v.indexOf('completamente') >= 0 || v.indexOf('полностью согл') >= 0 || v.indexOf('非常同意') >= 0 || v.indexOf('強く同意') >= 0 || v.indexOf('강력히 동의') >= 0 || v.indexOf('kesinlikle katıl') >= 0 || v.indexOf('zdecydowanie się zgadzam') >= 0 || v.indexOf('повністю погод') >= 0 || v.indexOf('zcela souhl') >= 0 || v.indexOf('úplne súhl') >= 0 || v.indexOf('complet de acord') >= 0 || v.indexOf('पूरी तरह सहमत') >= 0 || v.indexOf('teljesen') >= 0 || v.indexOf('sangat setuju') >= 0 || v.indexOf('sangat bersetuju') >= 0 || v.indexOf('முழுமையாக') >= 0 || v.indexOf('గట్టిగా అంగ') >= 0 || v.indexOf('ಸಂಪೂರ್ಣ ಒಪ್ಪ') >= 0 || v.indexOf('ശക്തമായി') >= 0 || v.indexOf('толық кел') >= 0 || v.indexOf('бүрэн санал') >= 0 || v.indexOf("to'liq") >= 0) return 'Strongly Agree';
+  if (v.indexOf('agree') >= 0 || v.indexOf('de acuerdo') >= 0 || v.indexOf("d'accord") >= 0 || v.indexOf('concordo') >= 0 || v.indexOf('stimme zu') >= 0 || v.indexOf('согласен') >= 0 || v.indexOf('同意') >= 0 || v.indexOf('동의') >= 0 || v.indexOf('katılıyorum') >= 0 || v.indexOf('zgadzam') >= 0 || v.indexOf('погодж') >= 0 || v.indexOf('souhl') >= 0 || v.indexOf('de acord') >= 0 || v.indexOf('सहमत') >= 0 || v.indexOf('egyetértek') >= 0 || v.indexOf('setuju') >= 0 || v.indexOf('ஒப்புக்') >= 0 || v.indexOf('అంగీకర') >= 0 || v.indexOf('ಒಪ್ಪಿಗ') >= 0 || v.indexOf('യോജിക്') >= 0 || v.indexOf('келісемін') >= 0 || v.indexOf('санал нэг') >= 0 || v.indexOf("qo'shilaman") >= 0) return 'Agree';
+  if (v.indexOf('neutral') >= 0 || v.indexOf('neutre') >= 0 || v.indexOf('neutro') >= 0 || v.indexOf('нейтрально') >= 0 || v.indexOf('中立') >= 0 || v.indexOf('중립') >= 0 || v.indexOf('tarafsız') >= 0 || v.indexOf('bейтарап') >= 0 || v.indexOf('бейтарап') >= 0 || v.indexOf('тэвдийг') >= 0 || v.indexOf('நடுநிலை') >= 0 || v.indexOf('తటస్థ') >= 0 || v.indexOf('ತಟಸ್ಥ') >= 0 || v.indexOf('നിഷ്') >= 0 || v.indexOf('neytral') >= 0) return 'Neutral';
+  if (v.indexOf('disagree') >= 0 || v.indexOf('desacuerdo') >= 0 || v.indexOf('désaccord') >= 0 || v.indexOf('discordo') >= 0 || v.indexOf('stimme nicht') >= 0 || v.indexOf('не согл') >= 0 || v.indexOf('不同意') >= 0 || v.indexOf('동의하지') >= 0 || v.indexOf('katılmıyorum') >= 0 || v.indexOf('nie zgadzam') >= 0 || v.indexOf('не погодж') >= 0 || v.indexOf('nesouhl') >= 0 || v.indexOf('dezacord') >= 0 || v.indexOf('असहमत') >= 0 || v.indexOf('nem értek') >= 0 || v.indexOf('tidak setuju') >= 0 || v.indexOf('ஒப்புக்கொள்ளவில்') >= 0 || v.indexOf('విభేద') >= 0 || v.indexOf('ಒಪ್ಪದ') >= 0 || v.indexOf('യോജിക്കുന്നില്') >= 0 || v.indexOf('келіспе') >= 0 || v.indexOf('санал нийл') >= 0 || v.indexOf("qo'shilmayman") >= 0) return 'Disagree';
+  if (v.indexOf('strongly dis') >= 0 || v.indexOf('muy en des') >= 0 || v.indexOf('pas du tout') >= 0 || v.indexOf('discordo plenamente') >= 0 || v.indexOf('überhaupt nicht') >= 0 || v.indexOf('assolutamente') >= 0 || v.indexOf('категорически') >= 0 || v.indexOf('非常不同意') >= 0 || v.indexOf('全く同意しない') >= 0 || v.indexOf('강력히 동의하지') >= 0 || v.indexOf('kesinlikle katılm') >= 0 || v.indexOf('zdecydowanie nie') >= 0 || v.indexOf('категорично') >= 0 || v.indexOf('zcela nesouhl') >= 0 || v.indexOf('úplne nesúhl') >= 0 || v.indexOf('total dezacord') >= 0 || v.indexOf('बिल्कुल असहमत') >= 0 || v.indexOf('egyáltalán') >= 0 || v.indexOf('sangat tidak setuju') >= 0 || v.indexOf('sangat tidak bersetuju') >= 0 || v.indexOf('முழுவதும்') >= 0 || v.indexOf('గట్టిగా విభేద') >= 0 || v.indexOf('ಸಂಪೂರ್ಣ ಒಪ್ಪದ') >= 0 || v.indexOf('ശക്തമായി വിയ') >= 0 || v.indexOf('мүлдем келіспе') >= 0 || v.indexOf('огт санал') >= 0 || v.indexOf("umuman qo'shilmayman") >= 0) return 'Strongly Disagree';
+  if (v === 'n/a' || v === 'н/п' || v === 'н/з' || v === 'n/d' || v === 't/a' || v === 't/b') return 'N/A';
+  return val;
+}
+
 function buildHeaders() {
   return ['Timestamp','Language','Region','Region Other',
           'Q1 Overall Satisfaction',
@@ -921,16 +966,52 @@ function buildHeaders() {
           'Q5 Most Valuable','Q6 Suggestions','Q7 NPS'];
 }
 
+function normalizeRegion(r) {
+  if (!r) return '';
+  var v = r.toLowerCase();
+  if (v.indexOf('apac') >= 0 || v.indexOf('asia') >= 0) return 'APAC';
+  if (v.indexOf('china') >= 0 || v.indexOf('中') >= 0) return 'China';
+  if (v.indexOf('e&a') >= 0 || v.indexOf('europ') >= 0) return 'E&A';
+  if (v.indexOf(' em') >= 0 || v === 'em' || v.indexOf('eurasian') >= 0 || v.indexOf('eurasia') >= 0) return 'EM';
+  if (v.indexOf('india') >= 0 || v.indexOf('भारत') >= 0) return 'India';
+  if (v.indexOf('mexico') >= 0 || v.indexOf('méxico') >= 0) return 'Mexico';
+  if (v.indexOf('samcam') >= 0 || v.indexOf('brazil') >= 0 || v.indexOf('brasil') >= 0) return 'SAMCAM/Brazil';
+  if (v.indexOf('north america') >= 0 || v.indexOf('norteamérica') >= 0 || v.indexOf('nordamerika') >= 0 || v.indexOf('北美') >= 0 || v.indexOf('северная америка') >= 0) return 'North America';
+  return r;
+}
+
+function normalizeQ1(val) {
+  if (!val) return '';
+  var v = val.toLowerCase();
+  if (v.indexOf('very sat') >= 0 || v.indexOf('muy sat') >= 0 || v.indexOf('très sat') >= 0 || v.indexOf('sehr zuf') >= 0 || v.indexOf('molto sodd') >= 0 || v.indexOf('очень дов') >= 0 || v.indexOf('非常滿意') >= 0 || v.indexOf('매우 만족') >= 0 || v.indexOf('sangat puas') >= 0 || v.indexOf('juda mamn') >= 0) return 'Very Satisfied';
+  if (v.indexOf('somewhat sat') >= 0 || v.indexOf('algo sat') >= 0 || v.indexOf('plutôt sat') >= 0 || v.indexOf('eher zuf') >= 0 || v.indexOf('abbastanza sodd') >= 0 || v.indexOf('скорее дов') >= 0 || v.indexOf('cukup puas') >= 0) return 'Somewhat Satisfied';
+  if (v.indexOf('neither') >= 0 || v.indexOf('ni sat') >= 0 || v.indexOf('weder') >= 0 || v.indexOf('neutral') >= 0 || v.indexOf('neutre') >= 0 || v.indexOf('neutro') >= 0) return 'Neutral';
+  if (v.indexOf('somewhat dis') >= 0 || v.indexOf('algo ins') >= 0 || v.indexOf('eher unzuf') >= 0) return 'Somewhat Dissatisfied';
+  if (v.indexOf('very dis') >= 0 || v.indexOf('muy ins') >= 0 || v.indexOf('sehr unzuf') >= 0) return 'Very Dissatisfied';
+  return val;
+}
+
+function normalizeQ3(val) {
+  if (!val) return '';
+  var v = val.toLowerCase();
+  if (v.indexOf('very clear') >= 0 || v.indexOf('muy claro') >= 0 || v.indexOf('très clair') >= 0 || v.indexOf('sehr klar') >= 0 || v.indexOf('非常清晰') >= 0 || v.indexOf('매우 명확') >= 0) return 'Very clear';
+  if (v.indexOf('fairly') >= 0 || v.indexOf('bastante') >= 0 || v.indexOf('assez') >= 0 || v.indexOf('ziemlich') >= 0) return 'Fairly clear';
+  if (v.indexOf('somewhat') >= 0 || v.indexOf('algo') >= 0 || v.indexOf('un peu') >= 0 || v.indexOf('einigermaßen') >= 0) return 'Somewhat clear';
+  if (v.indexOf('not very') >= 0 || v.indexOf('no muy') >= 0 || v.indexOf('pas très') >= 0 || v.indexOf('nicht sehr') >= 0) return 'Not very clear';
+  if (v.indexOf('not clear') >= 0 || v.indexOf('nada claro') >= 0 || v.indexOf('pas du tout') >= 0) return 'Not clear at all';
+  return val;
+}
+
 function docToRow(d) {
   return [
     d.timestamp || '',
-    d.language || '',
-    d.region || '',
+    (d.language || '').toUpperCase(),
+    normalizeRegion(d.region || ''),
     d.region_other || '',
-    d.q1 || '',
-    d.q2_0 || '', d.q2_1 || '', d.q2_2 || '', d.q2_3 || '', d.q2_4 || '',
-    d.q3 || '',
-    d.q4_0 || '', d.q4_1 || '', d.q4_2 || '',
+    normalizeQ1(d.q1 || ''),
+    normalizeSat(d.q2_0 || ''), normalizeSat(d.q2_1 || ''), normalizeSat(d.q2_2 || ''), normalizeSat(d.q2_3 || ''), normalizeSat(d.q2_4 || ''),
+    normalizeQ3(d.q3 || ''),
+    normalizeAgr(d.q4_0 || ''), normalizeAgr(d.q4_1 || ''), normalizeAgr(d.q4_2 || ''),
     (d.q5 || '').replace(/\n/g,' '),
     (d.q6 || '').replace(/\n/g,' '),
     d.q7_nps || ''
